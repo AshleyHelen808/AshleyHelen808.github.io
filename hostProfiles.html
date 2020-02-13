@@ -1,0 +1,1024 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+
+<head>
+    <title>Generic - Editorial by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+
+<body class="is-preload">
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <!-- Header -->
+                <header id="header">
+                    <strong>Find Me Elsewhere>>></strong>
+                    <ul class="icons">
+                        <li><a href="https://github.com/AshleyHelen808" class="icon brands fa-github"><span
+                                    class="label">GitHub</span></a></li>
+                        <li><a href="https://www.linkedin.com/in/ashley-miller-964025190/"
+                                class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+
+                    </ul>
+                </header>
+
+
+                <!-- Content -->
+                <section>
+                    <header class="main">
+                        <h1>Host Profiles</h1>
+                    </header>
+
+                    <h2>React</h2>
+                    <pre><code>import React from "react";
+                        import HostProfilesCurrent from "../hostProfiles/HostProfilesCurrent";
+                        import * as service from "../../services/hostProfilesServices";
+                        import PropTypes from "prop-types";
+                        import Swal from "sweetalert2";
+                        import logger from "sabio-debug";
+                        import { Row, Button } from "reactstrap";
+                        import styles from "../hostProfiles/hostProfiles.module.css";
+                        import ReviewsByHostId from "../reviews/ReviewsByHostId";
+                        
+                        const _logger = logger.extend("HostProfilesMain");
+                        
+                        class HostProfilesMain extends React.Component {
+                          state = {};
+                        
+                          componentDidMount() {
+                            _logger("componentDidMount");
+                        
+                            this.getCurrentProfile();
+                          }
+                        
+                          getCurrentProfile = () => {
+                            service
+                              .getByCreatedByv2()
+                              .then(this.actionSuccess)
+                              .catch(this.actionFail);
+                          };
+                        
+                          actionFail = error => {
+                            if (error.response.status === 404) {
+                              return this.noProfileExists();
+                            } else {
+                              return Swal.fire("Something Went Wrong", "", "error");
+                            }
+                          };
+                        
+                          actionSuccess = response => {
+                            if (response.item.statusId === 1) {
+                              return this.profileExists(response);
+                            } else {
+                              let listOfComponents = (
+                                  
+                                "404 error message"
+                              );
+                              let listOfReviews = null;
+                              const newState = {
+                                listOfComponents,
+                                listOfReviews
+                              };
+                              this.setState(() => newState);
+                            }
+                          };
+                        
+                          noProfileExists = () => {
+                            let listOfComponents = (
+                              "I need a new host profile button"
+                            );
+                            const newState = {
+                              listOfComponents
+                            };
+                            this.setState(() => newState);
+                          };
+                        
+                          profileExists = profiles => {
+                            const profile = profiles.item;
+                            let listOfComponents = (
+                              <HostProfilesCurrent
+                                key={profile.id}
+                                profile={profile}
+                                editFormPushLink={this.editFormPushLink}
+                                deleteProfile={this.removeProfile}
+                                isBuisnessCheck={this.isBuisnessCheck}
+                                hasBackgroundCheck={this.backgroundCheck}
+                                membership={this.props.currentUser.membershipType}
+                              />
+                            );
+                            let listOfReviews = (
+                              <ReviewsByHostId
+                                hostInfo={profile}
+                                currentUserInfo={this.props.currentUser}
+                              />
+                            );
+                            const newState = {
+                              profile,
+                              listOfComponents,
+                              listOfReviews
+                            };
+                            this.setState(() => newState);
+                          };
+                        
+                          removeProfile = data => {
+                            _logger("remove data", data);
+                            Swal.fire({
+                              title: "Are you sure?",
+                              text:
+                                "Your Host Profile and all associated reviews will be declared inactive.",
+                              icon: "warning",
+                              showCancelButton: true,
+                              confirmButtonColor: "#3085d6",
+                              cancelButtonColor: "#d33",
+                              confirmButtonText: "Yes, delete it!"
+                            }).then(result => {
+                              if (result.value) {
+                                service
+                                  .updateStatusId(data)
+                                  .then(this.getCurrentProfile)
+                                  .catch(this.onRemoveReviewsError);
+                                Swal.fire("Completed", "Your profile has been inactivated.", "success");
+                              }
+                            });
+                          };
+                        
+                          onRemoveReviewsError = () => {
+                            return null;
+                          };
+                        
+                          onRemoveProfileError = () => {
+                            Swal.fire("Something Went Wrong", "", "error");
+                          };
+                        
+                          editFormPushLink = () => {
+                            this.props.history.push(`/profiles/host/edit`, {
+                              profile: this.state.profile
+                            });
+                          };
+                          newFormPushLink = () => {
+                            this.props.history.push(`/profiles/host/create`);
+                          };
+                        
+                          backgroundCheck = hasBackgroundCheck => {
+                            let backgroundCheckDisplay = "error";
+                            if (hasBackgroundCheck === true) {
+                              backgroundCheckDisplay = "Has background check";
+                            } else {
+                              backgroundCheckDisplay = "No background check";
+                            }
+                            return backgroundCheckDisplay;
+                          };
+                        
+                          isBuisnessCheck = buisnessCheck => {
+                            let buisnessCheckDisplay = "error";
+                            if (buisnessCheck === true) {
+                              buisnessCheckDisplay = "Is a Buisness";
+                            } else {
+                              buisnessCheckDisplay = "Not a Buisness";
+                            }
+                            return buisnessCheckDisplay;
+                          };
+                        
+                          render() {
+                            return (
+                              <React.Fragment>
+                                <Row className={styles.templatecss}>{this.state.listOfComponents}</Row>
+                                <div style={{ paddingTop: "40px" }}>{this.state.listOfReviews}</div>
+                              </React.Fragment>
+                            );
+                          }
+                        }
+                        
+                        HostProfilesMain.propTypes = {
+                          history: PropTypes.shape({
+                            replace: PropTypes.func,
+                            push: PropTypes.func
+                          }),
+                          currentUser: PropTypes.shape({
+                            membershipType: PropTypes.string
+                          })
+                        };
+                        
+                        export default HostProfilesMain;
+                        
+                        </code></pre>
+
+                    <h2>.Net Core Controllers and Services</h2>
+                    <pre><code>
+                     
+                        namespace Sabio.Services
+{
+    public class HostProfilesServices : IHostProfilesServices
+    {
+        IDataProvider _data = null;
+
+        public HostProfilesServices(IDataProvider data)
+        {
+            _data = data;
+        }
+
+        public int Add(HostProfilesAddRequest model, int userId)
+        {
+            int id = 0;
+
+            string procName = "[dbo].[HostProfiles_Insert]";
+            _data.ExecuteNonQuery(procName, delegate (SqlParameterCollection paramCollection)
+            {
+                AddCommonParams(model, paramCollection);
+                paramCollection.AddWithValue("@CreatedBy", userId);
+
+                SqlParameter idOut = new SqlParameter("@Id", SqlDbType.Int);
+                idOut.Direction = ParameterDirection.Output;
+
+                paramCollection.Add(idOut);
+
+            }, returnParameters: delegate (SqlParameterCollection returnCollection)
+            {
+                object idObj = returnCollection["@Id"].Value;
+                int.TryParse(idObj.ToString(), out id);
+                Console.WriteLine("");
+            }
+            );
+            return id;
+        }
+
+        public Paged<HostProfiles> GetAll(int pageIndex, int pageSize)
+        {
+            Paged<HostProfiles> pagedResult = null;
+            List<HostProfiles> list = null;
+            int totalCount = 0;
+            HostProfiles hostProfile = null;
+            string procName = "[dbo].[HostProfiles_SelectAllV2]";
+
+
+            _data.ExecuteCmd(procName, inputParamMapper: delegate (SqlParameterCollection parameterCollection)
+            {
+                parameterCollection.AddWithValue("@pageIndex", pageIndex);
+                parameterCollection.AddWithValue("@pageSize", pageSize);
+            },
+            singleRecordMapper: delegate (IDataReader reader, short set)
+            {
+                hostProfile = MapHostProfilesv2(reader);
+
+                if (totalCount == 0)
+                {
+                    totalCount = reader.GetSafeInt32(14);
+                }
+
+                if (list == null)
+                {
+                    list = new List<HostProfiles>();
+                }
+                list.Add(hostProfile);
+            }
+            );
+
+            if (list != null)
+            {
+                pagedResult = new Paged<HostProfiles>(list, pageIndex, pageSize, totalCount);
+            }
+
+
+            return pagedResult;
+        }
+
+        public Paged<HostProfiles> GetAllSearched(int pageIndex, int pageSize, string searchQuery)
+        {
+            Paged<HostProfiles> pagedResult = null;
+            List<HostProfiles> list = null;
+            int totalCount = 0;
+            HostProfiles hostProfile = null;
+            string procName = "[dbo].[HostProfiles_SelectAllBySearchQuery]";
+
+
+            _data.ExecuteCmd(procName, inputParamMapper: delegate (SqlParameterCollection parameterCollection)
+            {
+                parameterCollection.AddWithValue("@pageIndex", pageIndex);
+                parameterCollection.AddWithValue("@pageSize", pageSize);
+                parameterCollection.AddWithValue("@searchQuery", searchQuery);
+
+            },
+            singleRecordMapper: delegate (IDataReader reader, short set)
+            {
+                hostProfile = MapHostProfilesv2(reader);
+
+                if (totalCount == 0)
+                {
+                    totalCount = reader.GetSafeInt32(14);
+                }
+
+                if (list == null)
+                {
+                    list = new List<HostProfiles>();
+                }
+                list.Add(hostProfile);
+            }
+            );
+
+            if (list != null)
+            {
+                pagedResult = new Paged<HostProfiles>(list, pageIndex, pageSize, totalCount);
+            }
+
+
+            return pagedResult;
+        }
+
+        public HostProfiles GetById(int Id)
+        {
+
+            string procName = "[dbo].[HostProfiles_SelectById]";
+            HostProfiles hostProfile = null;
+
+            _data.ExecuteCmd(procName, delegate (SqlParameterCollection paramCollection)
+            {
+
+                paramCollection.AddWithValue("@Id", Id);
+
+            }, delegate (IDataReader reader, short set)
+            {
+
+               hostProfile = MapHostProfilesv3(reader);
+
+
+            }
+
+           );
+           
+            return hostProfile;
+
+        }
+
+        public HostProfiles GetByCreatedByv2(int createdById)
+        {
+
+            string procName = "[dbo].[HostProfiles_SelectByCreatedByV2]";
+            HostProfiles hostProfile = null;
+
+            _data.ExecuteCmd(procName, delegate (SqlParameterCollection paramCollection)
+            {
+
+                paramCollection.AddWithValue("@CreatedBy", createdById);
+
+            }, delegate (IDataReader reader, short set)
+            {
+
+                hostProfile = MapHostProfilesv2(reader);
+
+            }
+
+           );
+
+            return hostProfile;
+
+        }
+
+        public Paged<HostProfiles> GetByCreatedBy(int pageIndex, int pageSize, int createdById)
+        {
+            Paged<HostProfiles> pagedResult = null;
+            List<HostProfiles> list = null;
+            int totalCount = 0;
+            string procName = "[dbo].[HostProfiles_SelectByCreatedBy]";
+            HostProfiles hostProfile = null;
+           
+
+            _data.ExecuteCmd(procName,
+               delegate (SqlParameterCollection paramCollection)
+            {
+
+                paramCollection.AddWithValue("@Createdby", createdById);
+                paramCollection.AddWithValue("@pageIndex", pageIndex);
+                paramCollection.AddWithValue("@pageSize", pageSize);
+
+            },delegate (IDataReader reader, short set)
+            {
+
+                hostProfile = MapHostProfiles(reader);
+
+                if (totalCount == 0)
+                {
+                    totalCount = reader.GetSafeInt32(11);
+                }
+
+                if (list == null)
+                {
+                    list = new List<HostProfiles>();
+                }
+                list.Add(hostProfile);
+            }
+            );
+
+            if (list != null)
+            {
+                pagedResult = new Paged<HostProfiles>(list, pageIndex, pageSize, totalCount);
+            }
+            return pagedResult;
+        }
+
+        public void Delete(int Id)
+        {
+
+            string procName = "[dbo].[HostProfiles_DeleteById]";
+            _data.ExecuteNonQuery(procName, delegate (SqlParameterCollection paramCollection)
+            {
+                paramCollection.AddWithValue("@Id", Id);
+
+            }, returnParameters: null);
+        }
+
+        public void Update(HostProfilesUpdateRequest model)
+        {
+
+            string procName = "[dbo].[HostProfiles_Update]";
+            _data.ExecuteNonQuery(procName, delegate (SqlParameterCollection paramCollection)
+            {
+                AddCommonParams(model, paramCollection);
+                paramCollection.AddWithValue("@CreatedBy", model.CreatedBy);
+                paramCollection.AddWithValue("@firstName", model.FirstName);
+                paramCollection.AddWithValue("@lastName", model.LastName);
+                paramCollection.AddWithValue("@Mi", model.MiddleInitial);
+                paramCollection.AddWithValue("@AvatarUrl", model.AvatarUrl);
+            },
+                returnParameters: null
+                );
+        }
+
+        public void UpdateStatusId(HostProfilesUpdateStatusRequest model)
+        {
+
+            string procName = "[dbo].[HostProfiles_UpdateStatusId]";
+            _data.ExecuteNonQuery(procName, delegate (SqlParameterCollection paramCollection)
+            {
+                paramCollection.AddWithValue("@StatusId", model.StatusId);
+                paramCollection.AddWithValue("@CreatedBy", model.CreatedBy);
+            },
+                returnParameters: null
+                );
+        }
+
+        private static void AddCommonParams(HostProfilesAddRequest model, SqlParameterCollection paramCollection)
+        {
+            paramCollection.AddWithValue("@IsBuisness", model.IsBuisness);
+            paramCollection.AddWithValue("@ShortDescription", model.ShortDescription);
+            paramCollection.AddWithValue("@Description", model.Description);
+            paramCollection.AddWithValue("@LanguageSpoken", model.LanguageSpoken);
+            paramCollection.AddWithValue("@HasBackgoundCheck", model.HasBackgroundCheck);
+
+
+        }
+
+        private static HostProfiles MapHostProfiles(IDataReader reader)
+        {
+
+            HostProfiles hostProfile = new HostProfiles();
+
+            int startingIndex = 0;
+            hostProfile.Id = reader.GetSafeInt32(startingIndex++);
+            hostProfile.IsBuisness = reader.GetBoolean(startingIndex++);
+            hostProfile.ShortDescription = reader.GetSafeString(startingIndex++);
+            hostProfile.Description = reader.GetSafeString(startingIndex++);
+            hostProfile.LanguageSpoken = reader.GetSafeString(startingIndex++);
+            hostProfile.HasBackgroundCheck = reader.GetBoolean(startingIndex++);
+            hostProfile.CreatedBy = reader.GetSafeInt32(startingIndex++);
+            hostProfile.DateCreated = reader.GetSafeDateTime(startingIndex++);
+            hostProfile.DateModified = reader.GetSafeDateTime(startingIndex++);
+            return hostProfile;
+        }
+
+        private static HostProfiles MapHostProfilesv2(IDataReader reader)
+        {
+
+            HostProfiles hostProfile = new HostProfiles();
+
+            int startingIndex = 0;
+            hostProfile.Id = reader.GetSafeInt32(startingIndex++);
+            hostProfile.IsBuisness = reader.GetBoolean(startingIndex++);
+            hostProfile.ShortDescription = reader.GetSafeString(startingIndex++);
+            hostProfile.Description = reader.GetSafeString(startingIndex++);
+            hostProfile.LanguageSpoken = reader.GetSafeString(startingIndex++);
+            hostProfile.HasBackgroundCheck = reader.GetBoolean(startingIndex++);
+            hostProfile.CreatedBy = reader.GetSafeInt32(startingIndex++);
+            hostProfile.DateCreated = reader.GetSafeDateTime(startingIndex++);
+            hostProfile.DateModified = reader.GetSafeDateTime(startingIndex++);
+            hostProfile.FirstName = reader.GetSafeString(startingIndex++);
+            hostProfile.LastName = reader.GetSafeString(startingIndex++);
+            hostProfile.MiddleInitial = reader.GetSafeString(startingIndex++);
+            hostProfile.AvatarUrl = reader.GetSafeString(startingIndex++);
+            hostProfile.StatusId = reader.GetSafeInt32(startingIndex++);
+
+            return hostProfile;
+        }
+
+        private static HostProfiles MapHostProfilesv3(IDataReader reader)
+        {
+
+            HostProfiles hostProfile = new HostProfiles();
+
+            int startingIndex = 0;
+            hostProfile.Id = reader.GetSafeInt32(startingIndex++);
+            hostProfile.IsBuisness = reader.GetBoolean(startingIndex++);
+            hostProfile.ShortDescription = reader.GetSafeString(startingIndex++);
+            hostProfile.Description = reader.GetSafeString(startingIndex++);
+            hostProfile.LanguageSpoken = reader.GetSafeString(startingIndex++);
+            hostProfile.HasBackgroundCheck = reader.GetBoolean(startingIndex++);
+            hostProfile.CreatedBy = reader.GetSafeInt32(startingIndex++);
+            hostProfile.DateCreated = reader.GetSafeDateTime(startingIndex++);
+            hostProfile.DateModified = reader.GetSafeDateTime(startingIndex++);
+            hostProfile.FirstName = reader.GetSafeString(startingIndex++);
+            hostProfile.LastName = reader.GetSafeString(startingIndex++);
+            hostProfile.MiddleInitial = reader.GetSafeString(startingIndex++);
+            hostProfile.AvatarUrl = reader.GetSafeString(startingIndex++);
+            hostProfile.Email = reader.GetSafeString(startingIndex++);
+            hostProfile.IsConfirmed = reader.GetBoolean(startingIndex++);
+            hostProfile.StatusId = reader.GetSafeInt32(startingIndex++);
+            return hostProfile;
+        }
+    }
+    [Route("api/profiles/host/")]
+    [ApiController]
+    public class HostProfilesApiController : BaseApiController
+    {
+        private IHostProfilesServices _hostProfileService = null;
+        IAuthenticationService<int> _authService = null;
+        public HostProfilesApiController(IHostProfilesServices service, ILogger<HostProfilesApiController> logger, IAuthenticationService<int> authService) : base(logger)
+        {
+            _hostProfileService = service;
+            _authService = authService;
+        }
+
+        [HttpPost]
+        public ActionResult<ItemResponse<int>> Create(HostProfilesAddRequest model)
+        {
+
+            ObjectResult result;
+
+            try
+            {
+                int userId = _authService.GetCurrentUserId();
+                int id = _hostProfileService.Add(model, userId);
+                ItemResponse<int> response = new ItemResponse<int>() { Item = id };
+                result = Created201(response);
+            }
+
+            catch (Exception ex)
+            {
+                Logger.LogError(ex.ToString());
+                ErrorResponse response = new ErrorResponse(ex.Message);
+
+                result = StatusCode(500, response);
+            }
+
+            return result;
+
+        }
+
+        [HttpGet]
+        public ActionResult<ItemResponse<Paged<HostProfiles>>> GetAll(int pageIndex, int pageSize)
+        {
+            int code = 200;
+            BaseResponse response;
+            try
+            {
+                Paged<HostProfiles> page = _hostProfileService.GetAll(pageIndex, pageSize);
+                
+
+                if (page == null)
+                {
+                    code = 404;
+                    response = new ErrorResponse("App Resource not found.");
+                }
+                else
+                {
+                    response = new ItemResponse<Paged<HostProfiles>> { Item = page };
+                }
+            }
+            catch (Exception ex)
+            {
+                code = 500;
+                response = new ErrorResponse(ex.Message);
+                Logger.LogError(ex.ToString());
+            }
+
+
+            return StatusCode(code, response);
+
+        }
+
+        [HttpGet("search")]
+        public ActionResult<ItemResponse<Paged<HostProfiles>>> GetAllSearched(int pageIndex, int pageSize, string searchQuery)
+        {
+            int code = 200;
+            BaseResponse response;
+            try
+            {
+                Paged<HostProfiles> page = _hostProfileService.GetAllSearched(pageIndex, pageSize, searchQuery);
+
+
+                if (page == null)
+                {
+                    code = 404;
+                    response = new ErrorResponse("App Resource not found.");
+                }
+                else
+                {
+                    response = new ItemResponse<Paged<HostProfiles>> { Item = page };
+                }
+            }
+            catch (Exception ex)
+            {
+                code = 500;
+                response = new ErrorResponse(ex.Message);
+                Logger.LogError(ex.ToString());
+            }
+
+
+            return StatusCode(code, response);
+
+        }
+
+
+        [HttpGet("{id:int}")]
+        public ActionResult<ItemResponse<HostProfiles>> GetById(int id)
+        {
+            int code = 200;
+            BaseResponse response;
+            try
+            {
+                HostProfiles hostProfiles = _hostProfileService.GetById(id);
+
+                if (hostProfiles == null)
+                {
+                    code = 404;
+                    response = new ErrorResponse("Application Resource not found.");
+                }
+                else
+                {                    
+                    response = new ItemResponse<HostProfiles>() { Item = hostProfiles };
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+
+                code = 500;
+                base.Logger.LogError(ex.ToString());
+                response = new ErrorResponse($"Generic Error: {ex.Message}");
+            }
+
+            return StatusCode(code, response);
+
+        }
+
+        [HttpGet("current")]
+        public ActionResult<ItemResponse<HostProfiles>> GetByCreatedByv2(int createdById)
+        {
+            int code = 200;
+            createdById = _authService.GetCurrentUserId();
+            BaseResponse response;
+            try
+            {
+                HostProfiles hostProfiles = _hostProfileService.GetByCreatedByv2(createdById);
+
+                if (hostProfiles == null)
+                {
+                    code = 404;
+                    response = new ErrorResponse("Application Resource not found.");
+                }
+                else
+                {
+                    response = new ItemResponse<HostProfiles>() { Item = hostProfiles };
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+                code = 500;
+                base.Logger.LogError(ex.ToString());
+                response = new ErrorResponse($"Generic Error: {ex.Message}");
+            }
+
+            return StatusCode(code, response);
+
+        }
+
+
+        [HttpGet("getbycreatedbypaginated")]
+        public ActionResult<ItemsResponse<Paged<HostProfiles>>> GetByCreatedBy(int pageIndex, int pageSize, int createdById)
+        {
+            int code = 200;
+            BaseResponse response = null;
+            
+
+            try
+            {
+                createdById = _authService.GetCurrentUserId();
+                Paged<HostProfiles> page = _hostProfileService.GetByCreatedBy(pageIndex, pageSize, createdById);
+               
+
+                if (page == null)
+                {
+                    code = 404;
+                    response = new ErrorResponse("App Resource not found.");
+                }
+                else
+                {
+                    response = new ItemResponse<Paged<HostProfiles>> { Item = page };
+                   
+                }
+            }
+
+            catch (Exception ex)
+            {
+                code = 500;
+                response = new ErrorResponse(ex.Message);
+                base.Logger.LogError(ex.ToString());
+            }
+
+
+            return StatusCode(code, response);
+
+        }
+
+        [HttpDelete("{id:int}")]
+        public ActionResult<SuccessResponse> Delete(int id)
+        {
+
+            int code = 200;
+            BaseResponse response = null;
+            try
+            {
+                _hostProfileService.Delete(id);
+
+                response = new SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                code = 500;
+                base.Logger.LogError(ex.ToString());
+                response = new ErrorResponse(ex.Message);
+            }
+
+            return StatusCode(code, response);
+
+        }
+
+        [HttpPut("edit")]
+        public ActionResult<SuccessResponse> Update(HostProfilesUpdateRequest model)
+        {
+            int code = 200;
+            BaseResponse response = null;
+            try
+            {
+                _hostProfileService.Update(model);
+
+                response = new SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                code = 500;
+                base.Logger.LogError(ex.ToString());
+                response = new ErrorResponse(ex.Message);
+            }
+
+            return StatusCode(code, response);
+
+        }
+
+        [HttpPut("statuschange")]
+        public ActionResult<SuccessResponse> UpdateStatusId(HostProfilesUpdateStatusRequest model)
+        {
+            int code = 200;
+            BaseResponse response = null;
+            try
+            {
+                _hostProfileService.UpdateStatusId(model);
+
+                response = new SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                code = 500;
+                base.Logger.LogError(ex.ToString());
+                response = new ErrorResponse(ex.Message);
+            }
+
+            return StatusCode(code, response);
+
+        }
+    }
+}
+
+                        </code></pre>
+
+
+
+
+                    <h2>Some Sql Stored Procs</h2>
+                    <pre><code>
+                        USE [C82_HireAHero]
+                        GO
+                        /****** Object:  StoredProcedure [dbo].[HostProfiles_SelectAllBySearchQuery]    Script Date: 2/12/2020 4:03:15 PM ******/
+                        SET ANSI_NULLS ON
+                        GO
+                        SET QUOTED_IDENTIFIER ON
+                        GO
+                        
+                        ALTER PROC [dbo].[HostProfiles_SelectAllBySearchQuery]
+                            @pageIndex int
+                            ,@pageSize int
+                            ,@searchQuery nvarchar(100)
+                        
+                        
+                        /*
+                        Declare 
+                            @pageIndex int = 0
+                            ,@pageSize int = 10
+                            ,@searchQuery nvarchar(100) = 'Ashley'
+                        
+                        Execute dbo.HostProfiles_SelectAllV2
+                            @pageIndex,
+                            @pageSize,
+                            @searchQuery
+                        
+                        */
+                        
+                        as
+                        begin
+                        
+                        
+                        Declare @offset int = @pageIndex * @pageSize
+                        
+                          SELECT h.[Id]
+                              ,h.[IsBuisness]
+                              ,h.[ShortDescription]
+                              ,h.[Description]
+                              ,h.[LanguageSpoken]
+                              ,h.[HasBackgroundCheck]
+                              ,h.[CreatedBy]
+                              ,h.[DateCreated]
+                              ,h.[DateModified]
+                              ,u.FirstName
+                              ,u.LastName
+                              ,u.Mi
+                              ,u.AvatarUrl
+                              ,h.HostProfileStatusId
+                              ,TotalCount = Count(1) Over() FROM
+                            dbo.HostProfiles AS H
+                                JOIN dbo.UserProfiles AS U
+                                    ON h.CreatedBy = u.UserId
+                        
+                            WHERE	u.[FirstName]	LIKE '%' + @searchQuery + '%'
+                                        OR
+                                    u.[LastName]	LIKE '%' + @searchQuery + '%'
+                                    
+                        
+                            ORDER BY [Id]
+                            OFFSET @PageSize * (@PageIndex) ROWS
+                            FETCH NEXT @PageSize ROWS ONLY;
+                        
+                        END
+
+
+                        USE [C82_HireAHero]
+GO
+/****** Object:  StoredProcedure [dbo].[HostProfiles_Update]    Script Date: 2/12/2020 4:03:52 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER  proc [dbo].[HostProfiles_Update]		
+		
+		@IsBuisness bit,
+		@ShortDescription nvarchar(255),
+		@Description nvarchar(MAX),
+		@LanguageSpoken nvarchar(255),
+		@HasBackgoundCheck bit,
+		@CreatedBy int,
+		@FirstName nvarchar(100),
+		@LastName nvarchar(100),
+		@Mi nvarchar(2),
+		@AvatarUrl varchar(255)
+		
+
+/*
+select * from dbo.HostProfiles
+
+Declare
+		@IsBuisness bit = 1,
+		@ShortDescription nvarchar(255) = 'route test',
+		@Description nvarchar(MAX) = 'route',
+		@LanguageSpoken nvarchar(255) = ';lkajsdf',
+		@HasBackgoundCheck bit = 1,
+		@CreatedBy int = 15
+
+Execute dbo.HostProfiles_Update
+		@IsBuisness,
+		@ShortDescription,
+		@Description,
+		@LanguageSpoken,
+		@HasBackgoundCheck,
+		@CreatedBy
+		
+		
+
+select * from dbo.HostProfiles
+
+*/
+as
+begin
+UPDATE [dbo].[HostProfiles]
+   SET [IsBuisness] = @IsBuisness
+      ,[ShortDescription] = @ShortDescription
+      ,[Description] = @Description
+      ,[LanguageSpoken] = @LanguageSpoken
+      ,[HasBackgroundCheck] = @HasBackgoundCheck
+	  ,CreatedBy = @CreatedBy
+       ,[DateModified] = GETUTCDATE()
+	   WHERE CreatedBy = @CreatedBy
+UPDATE [dbo].UserProfiles
+	SET FirstName = @FirstName
+	   ,LastName = @LastName
+	   ,Mi = @Mi
+	   ,AvatarUrl=@AvatarUrl
+	WHERE UserId = @CreatedBy
+end
+
+                        </code></pre>
+
+
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="inner">
+
+
+
+                <!-- Menu -->
+                <nav id="menu">
+                    <header class="major">
+                        <h2>Menu</h2>
+                    </header>
+                    <ul>
+                        <li><a href="index.html">Homepage</a></li>
+                        <li><a href="resume.html">Resume</a></li>
+                        <li><a href="codeSnippets.html">Code Snippets</a></li>
+                    </ul>
+                </nav>
+
+
+
+                <!-- Section -->
+                <section>
+                    <header class="major">
+                        <h2>Get in touch</h2>
+                    </header>
+                    <p>Id love to talk more about my projects or hear about employment opportunities.</p>
+                    <ul class="contact">
+                        <li class="icon solid fa-envelope"><a href="#">ashleyhelen808@gmail.com</a></li>
+                        <li class="icon solid fa-phone">(406)748-6619</li>
+
+                    </ul>
+                </section>
+
+
+
+
+            </div>
+        </div>
+
+
+    </div>
+    </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+</body>
+
+</html>

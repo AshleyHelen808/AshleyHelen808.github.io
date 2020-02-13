@@ -1,0 +1,371 @@
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+
+<head>
+    <title>Generic - Editorial by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+
+<body class="is-preload">
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <!-- Header -->
+                <header id="header">
+                    <strong>Find Me Elsewhere>>></strong>
+                    <ul class="icons">
+                        <li><a href="https://github.com/AshleyHelen808" class="icon brands fa-github"><span
+                                    class="label">GitHub</span></a></li>
+                        <li><a href="https://www.linkedin.com/in/ashley-miller-964025190/"
+                                class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+
+                    </ul>
+                </header>
+
+
+                <!-- Content -->
+                <section>
+                    <header class="main">
+                        <h1>Email Service</h1>
+
+                    </header>
+                    <h2>React</h2>
+                    <pre><code>
+                        import React from "react";
+                        import PropTypes from "prop-types";
+                        import logger from "sabio-debug";
+                        import {
+                          FormGroup,
+                          Label,
+                          Button,
+                          CardTitle,
+                          CardBody,
+                          Card
+                        } from "reactstrap";
+                        import { Formik, Field, Form } from "formik";
+                        import styles from "../hostProfiles/hostProfiles.module.css";
+                        import contactListingValidation from "../contactListingHost/contactListingValidationSchema";
+                        import * as emailService from "../../services/emailService";
+                        import * as userProfileService from "../../services/userProfilesService";
+                        import Swal from "sweetalert2";
+                        
+                        const _logger = logger.extend("ContactListingHost");
+                        
+                        class ContactListingHost extends React.Component {
+                          state = {
+                            formData: {
+                              subject: "",
+                              message: ""
+                            },
+                            userData: {
+                              firstName: "",
+                              lastName: "",
+                              senderEmail: ""
+                            },
+                            listingData: {
+                              recipientEmail: this.props.location.pathname.slice(11)
+                            }
+                          };
+                        
+                          componentDidMount() {
+                            _logger("componentDidMount");
+                            userProfileService
+                              .getByCreatedByV2()
+                              .then(this.getByCreatedBySucess)
+                              .catch(this.getByCreatedByFail);
+                          }
+                        
+                          getByCreatedByFail = () => {
+                            Swal.fire("Something Went Wrong", "", "error");
+                          };
+                        
+                          getByCreatedBySucess = response => {
+                            let profile = response.data.item;
+                            let newState = {
+                              userData: {
+                                firstName: profile.firstName,
+                                lastName: profile.lastName,
+                                senderEmail: profile.email
+                              }
+                            };
+                            this.setState(() => newState);
+                          };
+                        
+                          handleSubmit = values => {
+                            let newState = {
+                              formData: {
+                                subject: values.subject,
+                                message: values.message
+                              }
+                            };
+                            this.setState(() => newState);
+                            this.bundleData();
+                          };
+                        
+                          bundleData = () => {
+                            let data = {
+                              subject: this.state.formData.subject,
+                              message: this.state.formData.message,
+                              firstName: this.state.userData.firstName,
+                              lastName: this.state.userData.lastName,
+                              senderEmail: this.state.userData.senderEmail,
+                              recipientEmail: this.state.listingData.recipientEmail
+                            };
+                            _logger("data to email service", data);
+                            emailService
+                              .contactMeEmailService(data)
+                              .then(this.onSucessfullEmail)
+                              .catch(this.onFailedEmail);
+                          };
+                        
+                          onSucessfullEmail = () => {
+                            Swal.fire("Email Successful", "", "success");
+                            this.props.history.replace("/profiles/host/current");
+                          };
+                        
+                          onFailedEmail = () => {
+                            Swal.fire("Something Went Wrong", "", "error");
+                          };
+                        
+                          render() {
+                            return (
+                              <React.Fragment>
+                                <div className="d-flex justify-content-center">
+                                  <Formik
+                                    enableReinitialize={true}
+                                    validationSchema={contactListingValidation}
+                                    initialValues={this.state.formData}
+                                    onSubmit={this.handleSubmit}
+                                  >
+                                    {props => {
+                                      const { values, touched, errors, isValid, isSubmitting } = props;
+                                      return (
+                                        <Card className="p-5 col-10">
+                                          <Form className="justify-content-center">
+                                            <CardTitle className={styles.cardTitle}>
+                                              Contact Me
+                                            </CardTitle>
+                                            <CardBody>
+                                              <FormGroup>
+                                                <Label>Subject</Label>
+                                                <Field
+                                                  name="subject"
+                                                  placeholder=""
+                                                  autoComplete="off"
+                                                  className={
+                                                    errors.subject && touched.subject
+                                                      ? "form-control error"
+                                                      : "form-control"
+                                                  }
+                                                  type="text"
+                                                  values={values.subject}
+                                                />
+                                                {errors.firstName && touched.firstName && (
+                                                  <span className={styles.error}>
+                                                    {errors.firstName}
+                                                  </span>
+                                                )}
+                                              </FormGroup>
+                                              <FormGroup>
+                                                <Label>Message</Label>
+                                                <Field
+                                                  name="message"
+                                                  placeholder=""
+                                                  component="textarea"
+                                                  autoComplete="off"
+                                                  rows="10"
+                                                  className={
+                                                    errors.message && touched.message
+                                                      ? "form-control error"
+                                                      : "form-control"
+                                                  }
+                                                  values={values.message}
+                                                />
+                                                {errors.message && touched.message && (
+                                                  <span className={styles.error}>{errors.message}</span>
+                                                )}
+                                              </FormGroup>
+                        
+                                              <div className="d-flex justify-content-center">
+                                                <Button
+                                                  type="submit"
+                                                  disabled={!isValid || isSubmitting}
+                                                  className="d-flex justify-content-center"
+                                                >
+                                                  Send
+                                                </Button>
+                                              </div>
+                                            </CardBody>
+                                          </Form>
+                                        </Card>
+                                      );
+                                    }}
+                                  </Formik>
+                                </div>
+                              </React.Fragment>
+                            );
+                          }
+                        }
+                        
+                        ContactListingHost.propTypes = {
+                          history: PropTypes.shape({
+                            replace: PropTypes.func,
+                            push: PropTypes.func
+                          }),
+                          location: PropTypes.shape({
+                            pathname: PropTypes.string
+                          })
+                        };
+                        
+                        export default ContactListingHost;
+
+                        import * as Yup from "yup";
+
+let contactListingValidation = () => {
+  return Yup.object().shape({
+    subject: Yup.string()
+      .required("Required")
+      .max(255, "You've reached max amount of characters."),
+    message: Yup.string().required("Required")
+  });
+};
+
+export default { contactListingValidation };
+
+                    </code></pre>
+                    <h2>.Net Core Controllers and Services</h2>
+                    <pre><code>
+                        [HttpPost("contactme")]
+                        public ActionResult<SuccessResponse> Create(ContactMeEmailAddRequest data)
+                        {
+                
+                            BaseResponse result;
+                            int statusCode = 200;
+                
+                            try
+                            {
+                                _emailService.SendUserToUserEmail(data);
+                
+                                result = new SuccessResponse();
+                            }
+                
+                            catch (Exception ex)
+                            {
+                                base.Logger.LogError(ex.ToString());
+                                result = new ErrorResponse(ex.Message);
+                                statusCode = 500;
+                            }
+                
+                            return StatusCode(statusCode, result);
+                
+                        }
+
+                        public async void SendUserToUserEmail(ContactMeEmailAddRequest data)
+                        {
+                
+                            string htmlContent = CreateContactUsEmailBody(data.FirstName, data.LastName, data.Message);
+                            SendGridMessage email = new SendGridMessage()
+                            {
+                                From = new EmailAddress(data.SenderEmail),
+                                Subject = data.Subject,
+                                HtmlContent = htmlContent
+                
+                            };
+                            email.AddTo(new EmailAddress(data.RecipientEmail));
+                            await Send(email);
+                        }
+                
+                        protected string CreateContactUsEmailBody(string firstName, string lastName, string message)
+                        {
+                            string solutionPath = @"EmailTemplate/contactUsHtmlTemplate.html";
+                            string directory = Directory.GetCurrentDirectory();
+                            string path = Path.Combine(directory, solutionPath);
+                            string htmlContent = System.IO.File.ReadAllText(path);
+                            htmlContent = htmlContent.Replace("{firstName}", firstName);
+                            htmlContent = htmlContent.Replace("{lastName}", lastName);
+                            htmlContent = htmlContent.Replace("{Message}", message);
+                            return htmlContent;
+                        }
+                    </code></pre>
+
+
+
+
+
+
+
+
+
+
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="inner">
+
+
+
+                <!-- Menu -->
+                <nav id="menu">
+                    <header class="major">
+                        <h2>Menu</h2>
+                    </header>
+                    <ul>
+                        <li><a href="index.html">Homepage</a></li>
+                        <li><a href="resume.html">Resume</a></li>
+                        <li><a href="codeSnippets.html">Code Snippets</a></li>
+                    </ul>
+                </nav>
+
+
+
+                <!-- Section -->
+                <section>
+                    <header class="major">
+                        <h2>Get in touch</h2>
+                    </header>
+                    <p>Id love to talk more about my projects or hear about employment opportunities.</p>
+                    <ul class="contact">
+                        <li class="icon solid fa-envelope"><a href="#">ashleyhelen808@gmail.com</a></li>
+                        <li class="icon solid fa-phone">(406)748-6619</li>
+
+                    </ul>
+                </section>
+
+
+
+
+            </div>
+        </div>
+
+
+    </div>
+    </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+</body>
+
+</html>
