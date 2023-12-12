@@ -1947,6 +1947,7 @@ ul.icons {
   cursor: default;
   list-style: none;
   padding-left: 0;
+  box-sizing: border-box;
 }
 ul.icons li {
   display: inline-block;
